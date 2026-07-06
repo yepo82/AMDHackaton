@@ -1,0 +1,18 @@
+[
+  {
+    "task_id": "t1",
+    "prompt": "What is 15 times 6?"
+  },
+  {
+    "task_id": "t2",
+    "prompt": "Classify the sentiment of this review: 'The battery life is amazing and the camera quality exceeded my expectations.'"
+  },
+  {
+    "task_id": "t3",
+    "prompt": "Summarize the following text in one sentence: The company reported record profits this quarter, driven by strong demand in international markets and a successful new product launch."
+  },
+  {
+    "task_id": "t4",
+    "prompt": "What is the capital of France?"
+  }
+]

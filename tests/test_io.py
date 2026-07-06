@@ -57,7 +57,7 @@ def test_process_task_missing_prompt_returns_fallback():
 
 def test_process_task_agent_error_returns_fallback():
     class FailingAgent:
-        def generate(self, prompt):
+        def solve(self, prompt):
             raise RuntimeError("boom")
 
     result = process_task({"task_id": "t1", "prompt": "hello"}, FailingAgent())
@@ -74,7 +74,7 @@ def test_run_end_to_end_writes_valid_output(tmp_path):
     ]
     input_path.write_text(json.dumps(tasks), encoding="utf-8")
 
-    results = run(input_path=str(input_path), output_path=str(output_path))
+    results = run(input_path=str(input_path), output_path=str(output_path), agent=MockAgent())
 
     assert results == [
         {"task_id": "t1", "answer": "Mock answer for: hello"},
@@ -91,19 +91,26 @@ def test_run_respects_env_var_overrides(tmp_path, monkeypatch):
     monkeypatch.setenv("INPUT_PATH", str(input_path))
     monkeypatch.setenv("OUTPUT_PATH", str(output_path))
 
-    results = run()
+    results = run(agent=MockAgent())
 
     assert results == [{"task_id": "t1", "answer": "Mock answer for: hi"}]
     assert json.loads(output_path.read_text(encoding="utf-8")) == results
 
 
 def test_main_returns_zero_on_success(tmp_path, monkeypatch):
+    # main() always uses the real GeneralPurposeAgent (no agent injection point),
+    # so this must not depend on any real Fireworks credentials: without them,
+    # the LLM-needing "hi" prompt fails inside process_task and falls back to
+    # UNABLE_TO_ANSWER, but the run itself still succeeds with exit code 0.
     input_path = tmp_path / "tasks.json"
     output_path = tmp_path / "results.json"
     input_path.write_text(json.dumps([{"task_id": "t1", "prompt": "hi"}]), encoding="utf-8")
 
     monkeypatch.setenv("INPUT_PATH", str(input_path))
     monkeypatch.setenv("OUTPUT_PATH", str(output_path))
+    monkeypatch.delenv("FIREWORKS_API_KEY", raising=False)
+    monkeypatch.delenv("FIREWORKS_BASE_URL", raising=False)
+    monkeypatch.delenv("ALLOWED_MODELS", raising=False)
 
     assert main() == 0
     assert output_path.exists()

@@ -65,7 +65,12 @@ def looks_like_math(prompt: str) -> bool:
         return True
     if _PERCENT_SIGN_PATTERN.search(prompt):
         return True
-    return _contains_any_keyword(prompt, _MATH_KEYWORDS)
+    if _contains_any_keyword(prompt, _MATH_KEYWORDS):
+        return True
+    # Catches phrasing math_handler can solve directly (e.g. "times",
+    # "divided by") that isn't covered by the keyword list above, so
+    # classify_task routes it to MATH instead of wasting an LLM call on it.
+    return math_handler.try_solve_math(prompt) is not None
 
 
 def classify_task(prompt: str) -> TaskType:

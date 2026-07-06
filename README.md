@@ -1,37 +1,29 @@
 # hackathon-agent
 
-Generalist AI agent MVP. Reads tasks from `tasks.json`, processes each one,
-and writes the results to `results.json`. The processing step currently uses
-a mock agent (`main.MockAgent`) — no real Fireworks calls are made yet.
+## 1. What the agent does
 
-## Environment variables
+`GeneralPurposeAgent` reads a batch of tasks, classifies each `prompt` into
+one of eight categories (`router.classify_task`), and resolves it:
 
-| Variable              | Required | Default                |
-| ---------------------- | -------- | ------------------------ |
-| `FIREWORKS_API_KEY`    | only when an LLM call is actually made | - |
-| `FIREWORKS_BASE_URL`   | only when an LLM call is actually made | - |
-| `ALLOWED_MODELS`       | only when an LLM call is actually made | - |
-| `INPUT_PATH`           | no       | `/input/tasks.json`      |
-| `OUTPUT_PATH`          | no       | `/output/results.json`   |
+- **math**: tried locally first (`math_handler.try_solve_math`, regex +
+  controlled arithmetic, no `eval()`) to save LLM tokens. Only falls back to
+  an LLM call when the phrasing can't be solved with confidence.
+- **factual, sentiment, summarization, ner, code_debugging,
+  code_generation, logic**: each gets a short, category-specific prompt
+  (see `handlers/`) sent to Fireworks AI through an OpenAI-compatible
+  client (`fireworks_client.py`).
 
-No API keys or model names are hardcoded in the source. `ALLOWED_MODELS` is a
-comma-separated list (e.g. `model-a,model-b`) and must contain at least one
-entry.
+`main.py` reads the task list from `/input/tasks.json`, processes each task
+through the agent, and writes the answers to `/output/results.json`. If a
+single task fails for any reason (missing prompt, missing credentials, LLM
+error), its answer becomes `"Unable to answer the task."` instead of
+aborting the whole batch. The Fireworks client and its config are created
+lazily and reused across tasks — a run made only of math tasks never touches
+the Fireworks environment variables at all.
 
-Fireworks configuration (`config.load_config()`) is loaded lazily — only when
-an `Agent` actually routes an `"llm"` task. This means the mock-agent flow in
-`main.py`, and the math/router tests, run fine with none of the Fireworks
-variables set.
+## 2. `/input/tasks.json` structure
 
-`FireworksClient.complete(prompt, *, max_tokens=512)` calls
-`chat.completions.create` with `temperature=0` and a short system prompt. The
-model is picked by `choose_model()` from `ALLOWED_MODELS`: it prefers the
-first entry whose name contains `small`, `mini`, `8b`, `7b`, `qwen`, or
-`llama`, falling back to the first entry in the list otherwise.
-
-## Task format
-
-`tasks.json` is a JSON array of tasks:
+A JSON array of tasks:
 
 ```json
 [
@@ -40,7 +32,12 @@ first entry whose name contains `small`, `mini`, `8b`, `7b`, `qwen`, or
 ]
 ```
 
-`results.json` is a JSON array of results, one per task, in the same order:
+A sample file with one task per required category (math, sentiment,
+summary, factual) is provided at [`input/tasks.json`](input/tasks.json).
+
+## 3. `/output/results.json` structure
+
+A JSON array of results, one per task, in the same order as the input:
 
 ```json
 [
@@ -52,38 +49,71 @@ first entry whose name contains `small`, `mini`, `8b`, `7b`, `qwen`, or
 Rules:
 - The `/output` directory is created automatically if it doesn't exist.
 - `results.json` is always valid JSON.
-- If a single task fails (missing prompt, agent error), its `answer` is
-  `"Unable to answer the task."` — the rest of the batch still runs.
 - If the input file is missing or not valid JSON, the process exits with a
-  non-zero status and writes nothing.
-- On success, the process exits with status `0`.
+  non-zero status and writes nothing. On success, it exits with status `0`.
 
-## Run locally
+## 4. Environment variables
 
-```bash
-pip install -r requirements.txt
-INPUT_PATH=./tasks.json OUTPUT_PATH=./results.json python main.py
-```
+| Variable              | Required | Default                |
+| ---------------------- | -------- | ------------------------ |
+| `FIREWORKS_API_KEY`    | yes, for any task that needs the LLM | - |
+| `FIREWORKS_BASE_URL`   | yes, for any task that needs the LLM | - |
+| `ALLOWED_MODELS`       | yes, for any task that needs the LLM | - |
+| `INPUT_PATH`           | no       | `/input/tasks.json`      |
+| `OUTPUT_PATH`          | no       | `/output/results.json`   |
 
-## Run with Docker
+No API keys or model names are hardcoded in the source. `ALLOWED_MODELS` is
+a comma-separated list (e.g. `model-a,model-b`); `fireworks_client.choose_model`
+picks the first entry that looks like a small/efficient model (name
+containing `small`, `mini`, `8b`, `7b`, `qwen`, or `llama`), otherwise the
+first entry in the list.
+
+## 5. Build the image
 
 ```bash
 docker build -t hackathon-agent .
+```
+
+## 6. Run locally with volumes
+
+```bash
 docker run --rm \
   -e FIREWORKS_API_KEY=... \
   -e FIREWORKS_BASE_URL=... \
   -e ALLOWED_MODELS=... \
-  -v "$(pwd)/input:/input" \
-  -v "$(pwd)/output:/output" \
+  -v $(pwd)/input:/input \
+  -v $(pwd)/output:/output \
   hackathon-agent
 ```
 
-## Tests
+This reads `./input/tasks.json` (the sample file is already there) and
+writes `./output/results.json`.
 
-Tests use `pytest` (not included in `requirements.txt`, which only lists
-production dependencies):
+## Local testing
+
+Run the unit tests (mocked LLM calls only, no real network access, no
+Fireworks credentials required):
 
 ```bash
-pip install pytest
+pip install -r requirements.txt pytest
 pytest
+```
+
+Run the agent directly with Python, against the sample input, without
+building the Docker image:
+
+```bash
+FIREWORKS_API_KEY=... FIREWORKS_BASE_URL=... ALLOWED_MODELS=... \
+INPUT_PATH=./input/tasks.json OUTPUT_PATH=./output/results.json \
+python main.py
+cat ./output/results.json
+```
+
+Try it with no Fireworks variables set at all — the math task in the sample
+input still resolves correctly (solved locally), while the other tasks fall
+back to `"Unable to answer the task."` instead of crashing the run:
+
+```bash
+INPUT_PATH=./input/tasks.json OUTPUT_PATH=./output/results.json python main.py
+cat ./output/results.json
 ```

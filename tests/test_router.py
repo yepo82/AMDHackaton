@@ -58,6 +58,16 @@ def test_classify_math_from_bare_percent_sign():
     assert classify_task(prompt) == TaskType.MATH
 
 
+def test_classify_math_from_times_phrasing_not_in_keyword_list():
+    prompt = "What is 15 times 6?"
+    assert classify_task(prompt) == TaskType.MATH
+
+
+def test_classify_math_from_divided_by_phrasing_not_in_keyword_list():
+    prompt = "What is 120 divided by 5?"
+    assert classify_task(prompt) == TaskType.MATH
+
+
 def test_classify_factual_fallback():
     prompt = "What is the capital of France?"
     assert classify_task(prompt) == TaskType.FACTUAL

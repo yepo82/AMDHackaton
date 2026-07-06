@@ -11,18 +11,15 @@ import os
 import sys
 from typing import Optional
 
+from agent import GeneralPurposeAgent
+
 UNABLE_TO_ANSWER = "Unable to answer the task."
 
 
 class MockAgent:
-    """Placeholder standing in for the real Fireworks-backed agent.
+    """Test double for GeneralPurposeAgent -- no LLM calls, no env vars needed."""
 
-    Exposes the same `generate(prompt) -> str` interface as
-    `fireworks_client.FireworksClient`, so swapping it in later is a
-    one-line change.
-    """
-
-    def generate(self, prompt: str) -> str:
+    def solve(self, prompt: str) -> str:
         return f"Mock answer for: {prompt}"
 
 
@@ -45,7 +42,7 @@ def save_results(path: str, results: list) -> None:
 def process_task(task: dict, agent) -> dict:
     task_id = task.get("task_id")
     try:
-        answer = agent.generate(task["prompt"])
+        answer = agent.solve(task["prompt"])
     except Exception:
         answer = UNABLE_TO_ANSWER
     return {"task_id": task_id, "answer": answer}
@@ -54,7 +51,7 @@ def process_task(task: dict, agent) -> dict:
 def run(input_path: Optional[str] = None, output_path: Optional[str] = None, agent=None) -> list:
     input_path = input_path or os.environ.get("INPUT_PATH", "/input/tasks.json")
     output_path = output_path or os.environ.get("OUTPUT_PATH", "/output/results.json")
-    agent = agent or MockAgent()
+    agent = agent or GeneralPurposeAgent()
 
     tasks = load_tasks(input_path)
     results = [process_task(task, agent) for task in tasks]
