@@ -11,8 +11,6 @@ import os
 import sys
 from typing import Optional
 
-from config import Config
-
 UNABLE_TO_ANSWER = "Unable to answer the task."
 
 
@@ -54,9 +52,8 @@ def process_task(task: dict, agent) -> dict:
 
 
 def run(input_path: Optional[str] = None, output_path: Optional[str] = None, agent=None) -> list:
-    config = Config()
-    input_path = input_path or config.input_path
-    output_path = output_path or config.output_path
+    input_path = input_path or os.environ.get("INPUT_PATH", "/input/tasks.json")
+    output_path = output_path or os.environ.get("OUTPUT_PATH", "/output/results.json")
     agent = agent or MockAgent()
 
     tasks = load_tasks(input_path)

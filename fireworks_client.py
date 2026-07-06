@@ -3,29 +3,37 @@ from typing import Optional
 
 import openai
 
-from config import Config
+from config import AppConfig, load_config
 
 
 class FireworksClient:
-    def __init__(self, config: Optional[Config] = None):
-        self.config = config or Config()
+    def __init__(self, config: Optional[AppConfig] = None):
+        self._config = config
         self._client: Optional[openai.OpenAI] = None
+
+    @property
+    def config(self) -> AppConfig:
+        if self._config is None:
+            self._config = load_config()
+        return self._config
 
     @property
     def client(self) -> openai.OpenAI:
         if self._client is None:
             self._client = openai.OpenAI(
-                api_key=self.config.fireworks_api_key,
-                base_url=self.config.fireworks_base_url,
+                api_key=self.config.api_key,
+                base_url=self.config.base_url,
             )
         return self._client
 
-    def generate(self, prompt: str, **kwargs) -> str:
-        if not self.config.fireworks_model:
-            raise ValueError("FIREWORKS_MODEL environment variable is not set")
+    def generate(self, prompt: str, model: Optional[str] = None, **kwargs) -> str:
+        config = self.config
+        model = model or config.allowed_models[0]
+        if model not in config.allowed_models:
+            raise ValueError(f"Model '{model}' is not in ALLOWED_MODELS: {config.allowed_models}")
 
         response = self.client.chat.completions.create(
-            model=self.config.fireworks_model,
+            model=model,
             messages=[{"role": "user", "content": prompt}],
             **kwargs,
         )

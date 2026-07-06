@@ -6,15 +6,22 @@ a mock agent (`main.MockAgent`) — no real Fireworks calls are made yet.
 
 ## Environment variables
 
-| Variable              | Required | Default                                     |
-| ---------------------- | -------- | -------------------------------------------- |
-| `FIREWORKS_API_KEY`    | no (unused until Fireworks is wired in) | -                |
-| `FIREWORKS_MODEL`      | no (unused until Fireworks is wired in) | -                |
-| `FIREWORKS_BASE_URL`   | no       | `https://api.fireworks.ai/inference/v1`       |
-| `INPUT_PATH`           | no       | `/input/tasks.json`                           |
-| `OUTPUT_PATH`          | no       | `/output/results.json`                        |
+| Variable              | Required | Default                |
+| ---------------------- | -------- | ------------------------ |
+| `FIREWORKS_API_KEY`    | only when an LLM call is actually made | - |
+| `FIREWORKS_BASE_URL`   | only when an LLM call is actually made | - |
+| `ALLOWED_MODELS`       | only when an LLM call is actually made | - |
+| `INPUT_PATH`           | no       | `/input/tasks.json`      |
+| `OUTPUT_PATH`          | no       | `/output/results.json`   |
 
-No API keys or model names are hardcoded in the source.
+No API keys or model names are hardcoded in the source. `ALLOWED_MODELS` is a
+comma-separated list (e.g. `model-a,model-b`) and must contain at least one
+entry.
+
+Fireworks configuration (`config.load_config()`) is loaded lazily — only when
+`FireworksClient.generate()` is actually called. This means the mock-agent
+flow, and the math/router tests, run fine with none of the Fireworks
+variables set.
 
 ## Task format
 
@@ -58,7 +65,8 @@ INPUT_PATH=./tasks.json OUTPUT_PATH=./results.json python main.py
 docker build -t hackathon-agent .
 docker run --rm \
   -e FIREWORKS_API_KEY=... \
-  -e FIREWORKS_MODEL=... \
+  -e FIREWORKS_BASE_URL=... \
+  -e ALLOWED_MODELS=... \
   -v "$(pwd)/input:/input" \
   -v "$(pwd)/output:/output" \
   hackathon-agent
