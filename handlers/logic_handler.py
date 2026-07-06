@@ -1,7 +1,7 @@
 """Logic and reasoning handler."""
 from .llm_handler import ask_llm
 
-INSTRUCTION = "Solve the reasoning task carefully. Return the final answer with a brief explanation."
+INSTRUCTION = "Solve carefully. Give the final answer with a brief explanation."
 MAX_TOKENS = 512
 
 

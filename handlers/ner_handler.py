@@ -1,7 +1,7 @@
 """Named entity recognition handler."""
 from .llm_handler import ask_llm
 
-INSTRUCTION = "Extract named entities as valid JSON. Use labels PERSON, ORG, LOCATION, DATE. Return JSON only."
+INSTRUCTION = "Extract entities as JSON only. Labels: PERSON, ORG, LOCATION, DATE."
 MAX_TOKENS = 256
 
 

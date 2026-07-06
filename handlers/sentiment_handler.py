@@ -1,8 +1,8 @@
 """Sentiment analysis handler."""
 from .llm_handler import ask_llm
 
-INSTRUCTION = "Classify sentiment as positive, negative, or neutral. Give one brief justification."
-MAX_TOKENS = 128
+INSTRUCTION = "Classify sentiment (positive, negative, or neutral) with one brief reason."
+MAX_TOKENS = 96
 
 
 def handle_sentiment(prompt: str, client) -> str:

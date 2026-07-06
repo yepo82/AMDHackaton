@@ -2,10 +2,7 @@
 from .llm_handler import ask_llm
 
 DEBUGGING_INSTRUCTION = "Identify the bug briefly and provide corrected code."
-GENERATION_INSTRUCTION = (
-    "Write correct concise code that satisfies the specification. "
-    "Return only code unless explanation is requested."
-)
+GENERATION_INSTRUCTION = "Write correct, concise code for the spec. Code only unless explanation is requested."
 MAX_TOKENS = 768
 
 _DEBUGGING_KEYWORDS = ("debug", "bug", "fix this code", "error", "traceback", "exception", "broken code")

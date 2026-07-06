@@ -1,7 +1,7 @@
 """Generalist LLM handler: builds compact prompts and calls the Fireworks client."""
 
 FACTUAL_INSTRUCTION = "Answer accurately and concisely."
-FACTUAL_MAX_TOKENS = 256
+FACTUAL_MAX_TOKENS = 192
 
 
 def ask_llm(client, instruction: str, task: str, max_tokens: int = 512) -> str:

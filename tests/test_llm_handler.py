@@ -35,7 +35,7 @@ def test_handle_factual_uses_expected_instruction_and_max_tokens():
 
     call = client.calls[0]
     assert call["prompt"] == "Answer accurately and concisely.\n\nTask:\nWhat is the capital of France?"
-    assert call["max_tokens"] == 256
+    assert call["max_tokens"] == 192
 
 
 def test_handle_summary_uses_expected_instruction_and_max_tokens():
@@ -55,9 +55,9 @@ def test_handle_sentiment_uses_expected_instruction_and_max_tokens():
 
     call = client.calls[0]
     assert call["prompt"].startswith(
-        "Classify sentiment as positive, negative, or neutral. Give one brief justification."
+        "Classify sentiment (positive, negative, or neutral) with one brief reason."
     )
-    assert call["max_tokens"] == 128
+    assert call["max_tokens"] == 96
 
 
 def test_handle_ner_uses_expected_instruction_and_max_tokens():
@@ -66,9 +66,7 @@ def test_handle_ner_uses_expected_instruction_and_max_tokens():
     handle_ner("Barack Obama visited Paris in 2015.", client)
 
     call = client.calls[0]
-    assert call["prompt"].startswith(
-        "Extract named entities as valid JSON. Use labels PERSON, ORG, LOCATION, DATE. Return JSON only."
-    )
+    assert call["prompt"].startswith("Extract entities as JSON only. Labels: PERSON, ORG, LOCATION, DATE.")
     assert call["max_tokens"] == 256
 
 
@@ -88,10 +86,7 @@ def test_handle_code_generation_uses_expected_instruction_and_max_tokens():
     handle_code_generation("Write a function that reverses a string.", client)
 
     call = client.calls[0]
-    assert call["prompt"].startswith(
-        "Write correct concise code that satisfies the specification. "
-        "Return only code unless explanation is requested."
-    )
+    assert call["prompt"].startswith("Write correct, concise code for the spec. Code only unless explanation is requested.")
     assert call["max_tokens"] == 768
 
 
@@ -101,9 +96,7 @@ def test_handle_logic_uses_expected_instruction_and_max_tokens():
     handle_logic("Solve this logic puzzle...", client)
 
     call = client.calls[0]
-    assert call["prompt"].startswith(
-        "Solve the reasoning task carefully. Return the final answer with a brief explanation."
-    )
+    assert call["prompt"].startswith("Solve carefully. Give the final answer with a brief explanation.")
     assert call["max_tokens"] == 512
 
 
@@ -122,7 +115,7 @@ def test_code_handle_dispatches_to_generation_by_default():
     result = code_handle({"input": "Write a function that reverses a string."}, client=client)
 
     assert result["status"] == "ok"
-    assert client.calls[0]["prompt"].startswith("Write correct concise code")
+    assert client.calls[0]["prompt"].startswith("Write correct, concise code")
 
 
 def test_handle_without_client_returns_error():

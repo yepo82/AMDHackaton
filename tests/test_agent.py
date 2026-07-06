@@ -25,6 +25,27 @@ def test_math_prompt_solved_locally_without_loading_config(monkeypatch):
     assert result == "20"
 
 
+@pytest.mark.parametrize(
+    "prompt,expected",
+    [
+        ("What is 25% of 80?", "20"),
+        ("What is 15 times 6?", "90"),
+        ("What is 120 divided by 5?", "24"),
+        ("Calculate 24 + 18", "42"),
+        ("What is the average of 10 and 20?", "15"),
+        ("What is the square root of 16?", "4"),
+    ],
+)
+def test_simple_math_prompts_never_call_the_llm(monkeypatch, prompt, expected):
+    def _boom(*args, **kwargs):
+        raise AssertionError(f"LLM should never be called for a locally solvable prompt: {prompt!r}")
+
+    monkeypatch.setattr(agent_module, "load_config", _boom)
+    monkeypatch.setattr(agent_module, "FireworksClient", _boom)
+
+    assert GeneralPurposeAgent().solve(prompt) == expected
+
+
 def test_math_prompt_falls_back_to_llm_when_not_locally_solvable(monkeypatch):
     fake_client = FakeClient("42")
     monkeypatch.setattr(agent_module, "load_config", lambda: object())
@@ -72,7 +93,7 @@ def test_sentiment_prompt_dispatches_to_sentiment_handler(monkeypatch):
     GeneralPurposeAgent().solve("Classify the sentiment of this review as positive or negative.")
 
     assert fake_client.calls[0]["prompt"].startswith(
-        "Classify sentiment as positive, negative, or neutral. Give one brief justification."
+        "Classify sentiment (positive, negative, or neutral) with one brief reason."
     )
 
 
@@ -83,9 +104,7 @@ def test_code_generation_prompt_dispatches_to_code_generation_handler(monkeypatc
 
     GeneralPurposeAgent().solve("Write a function that reverses a string.")
 
-    assert fake_client.calls[0]["prompt"].startswith(
-        "Write correct concise code that satisfies the specification."
-    )
+    assert fake_client.calls[0]["prompt"].startswith("Write correct, concise code for the spec.")
 
 
 def test_llm_errors_are_not_swallowed_by_agent(monkeypatch):

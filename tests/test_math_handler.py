@@ -1,4 +1,4 @@
-from handlers.math_handler import handle, try_solve_math
+from handlers.math_handler import MATH_FALLBACK_MAX_TOKENS, handle, try_solve_math
 
 
 def test_simple_addition():
@@ -54,3 +54,40 @@ def test_try_solve_math_returns_none_for_ambiguous_prompt():
 
 def test_try_solve_math_decimal_result_has_no_trailing_zeros():
     assert try_solve_math("What is 100 divided by 8?") == "12.5"
+
+
+def test_try_solve_math_percentage_of_with_word_percent():
+    assert try_solve_math("What is 25 percent of 80?") == "20"
+
+
+def test_try_solve_math_price_increase_with_word_percent():
+    prompt = "If a price is 80 and increases by 25 percent, what is the new price?"
+    assert try_solve_math(prompt) == "100"
+
+
+def test_try_solve_math_average_of_two_numbers():
+    assert try_solve_math("What is the average of 10 and 20?") == "15"
+
+
+def test_try_solve_math_square_root():
+    assert try_solve_math("What is the square root of 16?") == "4"
+
+
+def test_try_solve_math_squared():
+    assert try_solve_math("What is 5 squared?") == "25"
+
+
+def test_try_solve_math_power_word_form():
+    assert try_solve_math("What is 2 to the power of 10?") == "1024"
+
+
+def test_try_solve_math_power_symbol_form():
+    assert try_solve_math("What is 2^10?") == "1024"
+
+
+def test_try_solve_math_ignores_unrelated_percentile_mention():
+    assert try_solve_math("Tell me about the 90th percentile of scores.") is None
+
+
+def test_math_fallback_max_tokens_is_tight():
+    assert MATH_FALLBACK_MAX_TOKENS <= 128

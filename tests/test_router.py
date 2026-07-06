@@ -68,6 +68,16 @@ def test_classify_math_from_divided_by_phrasing_not_in_keyword_list():
     assert classify_task(prompt) == TaskType.MATH
 
 
+def test_classify_math_from_average_phrasing():
+    prompt = "What is the average of 10 and 20?"
+    assert classify_task(prompt) == TaskType.MATH
+
+
+def test_classify_math_from_square_root_phrasing():
+    prompt = "What is the square root of 16?"
+    assert classify_task(prompt) == TaskType.MATH
+
+
 def test_classify_factual_fallback():
     prompt = "What is the capital of France?"
     assert classify_task(prompt) == TaskType.FACTUAL
