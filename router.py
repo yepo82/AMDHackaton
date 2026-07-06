@@ -52,6 +52,7 @@ _LOGIC_KEYWORDS = ("logic puzzle", "deduce", "constraints", "who is", "which per
 _MATH_KEYWORDS = ("percent", "percentage", "calculate", "total", "cost", "increase", "decrease", "ratio")
 
 _MATH_OPERATOR_PATTERN = re.compile(r"\d+\s*[-+*/^%]\s*\d+")
+_PERCENT_SIGN_PATTERN = re.compile(r"\d+\s*%")
 
 
 def _contains_any_keyword(text: str, keywords: tuple) -> bool:
@@ -61,6 +62,8 @@ def _contains_any_keyword(text: str, keywords: tuple) -> bool:
 
 def looks_like_math(prompt: str) -> bool:
     if _MATH_OPERATOR_PATTERN.search(prompt):
+        return True
+    if _PERCENT_SIGN_PATTERN.search(prompt):
         return True
     return _contains_any_keyword(prompt, _MATH_KEYWORDS)
 

@@ -53,6 +53,11 @@ def test_classify_math_from_numeric_expression():
     assert classify_task(prompt) == TaskType.MATH
 
 
+def test_classify_math_from_bare_percent_sign():
+    prompt = "What is 25% of 80?"
+    assert classify_task(prompt) == TaskType.MATH
+
+
 def test_classify_factual_fallback():
     prompt = "What is the capital of France?"
     assert classify_task(prompt) == TaskType.FACTUAL

@@ -7,6 +7,11 @@ import operator
 import re
 from typing import Optional
 
+from .llm_handler import ask_llm
+
+MATH_FALLBACK_INSTRUCTION = "Solve the math problem. Return the final answer concisely."
+MATH_FALLBACK_MAX_TOKENS = 256
+
 _OPERATORS = {
     ast.Add: operator.add,
     ast.Sub: operator.sub,
@@ -93,3 +98,7 @@ def try_solve_math(prompt: str) -> Optional[str]:
             return None if result is None else _format_number(result)
 
     return None
+
+
+def handle_math_fallback(prompt: str, client) -> str:
+    return ask_llm(client, MATH_FALLBACK_INSTRUCTION, prompt, max_tokens=MATH_FALLBACK_MAX_TOKENS)
