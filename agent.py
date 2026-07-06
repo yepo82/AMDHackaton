@@ -22,7 +22,7 @@ class Agent:
 
         try:
             handler = route(task_type)
-            outcome = handler(task, client=self.client) if task_type == "llm" else handler(task)
+            outcome = handler(task) if task_type == "math" else handler(task, client=self.client)
         except ValueError as exc:
             outcome = {"status": "error", "result": None, "error": str(exc)}
 
