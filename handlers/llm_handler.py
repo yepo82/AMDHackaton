@@ -7,7 +7,7 @@ def handle(task: dict, client=None) -> dict:
 
     prompt = task.get("input", "")
     try:
-        result = client.generate(prompt)
+        result = client.complete(prompt)
         return {"status": "ok", "result": result}
     except Exception as exc:
         return {"status": "error", "result": None, "error": str(exc)}

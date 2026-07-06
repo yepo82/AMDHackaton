@@ -19,9 +19,15 @@ comma-separated list (e.g. `model-a,model-b`) and must contain at least one
 entry.
 
 Fireworks configuration (`config.load_config()`) is loaded lazily — only when
-`FireworksClient.generate()` is actually called. This means the mock-agent
-flow, and the math/router tests, run fine with none of the Fireworks
+an `Agent` actually routes an `"llm"` task. This means the mock-agent flow in
+`main.py`, and the math/router tests, run fine with none of the Fireworks
 variables set.
+
+`FireworksClient.complete(prompt, *, max_tokens=512)` calls
+`chat.completions.create` with `temperature=0` and a short system prompt. The
+model is picked by `choose_model()` from `ALLOWED_MODELS`: it prefers the
+first entry whose name contains `small`, `mini`, `8b`, `7b`, `qwen`, or
+`llama`, falling back to the first entry in the list otherwise.
 
 ## Task format
 

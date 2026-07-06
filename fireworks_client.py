@@ -1,40 +1,38 @@
 """Thin wrapper around the Fireworks AI OpenAI-compatible endpoint."""
-from typing import Optional
+from openai import OpenAI
 
-import openai
+from config import AppConfig
 
-from config import AppConfig, load_config
+SYSTEM_PROMPT = "You are a precise AI agent. Answer directly."
+
+_PREFERRED_KEYWORDS = ("small", "mini", "8b", "7b", "qwen", "llama")
+
+
+def choose_model(models: list[str]) -> str:
+    for model in models:
+        lowered = model.lower()
+        if any(keyword in lowered for keyword in _PREFERRED_KEYWORDS):
+            return model
+    return models[0]
 
 
 class FireworksClient:
-    def __init__(self, config: Optional[AppConfig] = None):
-        self._config = config
-        self._client: Optional[openai.OpenAI] = None
+    def __init__(self, config: AppConfig):
+        self.config = config
+        self._client = OpenAI(api_key=config.api_key, base_url=config.base_url)
 
-    @property
-    def config(self) -> AppConfig:
-        if self._config is None:
-            self._config = load_config()
-        return self._config
-
-    @property
-    def client(self) -> openai.OpenAI:
-        if self._client is None:
-            self._client = openai.OpenAI(
-                api_key=self.config.api_key,
-                base_url=self.config.base_url,
+    def complete(self, prompt: str, *, max_tokens: int = 512) -> str:
+        model = choose_model(self.config.allowed_models)
+        try:
+            response = self._client.chat.completions.create(
+                model=model,
+                temperature=0,
+                max_tokens=max_tokens,
+                messages=[
+                    {"role": "system", "content": SYSTEM_PROMPT},
+                    {"role": "user", "content": prompt},
+                ],
             )
-        return self._client
-
-    def generate(self, prompt: str, model: Optional[str] = None, **kwargs) -> str:
-        config = self.config
-        model = model or config.allowed_models[0]
-        if model not in config.allowed_models:
-            raise ValueError(f"Model '{model}' is not in ALLOWED_MODELS: {config.allowed_models}")
-
-        response = self.client.chat.completions.create(
-            model=model,
-            messages=[{"role": "user", "content": prompt}],
-            **kwargs,
-        )
+        except Exception as exc:
+            raise RuntimeError(f"Fireworks completion failed for model '{model}': {exc}") from exc
         return response.choices[0].message.content
