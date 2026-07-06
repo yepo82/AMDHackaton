@@ -91,11 +91,12 @@ writes `./output/results.json`.
 
 ## Local testing
 
-Run the unit tests (mocked LLM calls only, no real network access, no
-Fireworks credentials required):
+Run the unit tests (mocked/faked LLM calls only, no real network access, no
+Fireworks credentials required — `requirements-dev.txt` is test-only and is
+never installed into the production image):
 
 ```bash
-pip install -r requirements.txt pytest
+pip install -r requirements.txt -r requirements-dev.txt
 pytest
 ```
 
