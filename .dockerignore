@@ -1,0 +1,13 @@
+.git
+.gitignore
+.dockerignore
+__pycache__/
+*.pyc
+.pytest_cache/
+tests/
+scripts/
+README.md
+requirements-dev.txt
+input/
+output/
+.env
